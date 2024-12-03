@@ -4,6 +4,10 @@ pipeline {
         maven 'maven3'
         jdk 'jdk17'
     }
+    environment {
+        SCANNER_HOME = tool 'sonar-scanner'
+        TRIVY_CACHE_DIR = '/var/tmp/trivy'
+        }
     stages {
         stage('Git Checkout') {
             steps {
@@ -34,6 +38,27 @@ pipeline {
                echo 'Trivy Scan Started'
                sh 'trivy fs --format table --output trivy-fs-output.txt .'
             }
+        } 
+        stage('Sonar Analysis') {
+            steps {
+               withSonarQubeEnv('sonar') {
+                sh ''' $SCANNER_HOME/bin/sonar-scanner -Dsonar.projectName=SpringBootApp -Dsonar.projectKey=SpringBootApp \
+                                                       -Dsonar.java.binaries=. -Dsonar.exclusions=**/trivy-fs-output.txt '''
+               }
+            }
+        } 
+        stage('Quality Gate') {
+            steps {
+              timeout(time: 1, unit: 'MINUTES') {
+               waitForQualityGate abortPipeline: true, credentialsId: 'sonar'  
+              }
+            } 
+        }
+        stage('Maven Package') {
+            steps {
+               echo 'Maven package Started'
+               sh 'mvn package'
+          }
         } 
     }
 }
