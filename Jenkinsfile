@@ -85,5 +85,37 @@ pipeline {
                 }
             }   
         } 
+        stage('Build Docker Image and TAG') {
+            steps {
+                script {
+                    // Build the Docker image using the renamed JAR file
+                    script {
+                            sh 'docker build -t springboot:latest .'
+                   }
+                }   
+            }
+        }
+        stage('Docker Image Scan') {
+            steps {
+                sh 'trivy image --format table --scanners vuln -o trivy-image-report.html springboot:latest'
+            }
+        }
+        stage('Archive Report') {
+            steps {
+                // Archive the Trivy report for later reference
+                archiveArtifacts artifacts: 'trivy-image-report.html', fingerprint: true
+            }
+        }
+        stage('Push Docker Image To Docker Hub') {
+            steps {
+                script {
+                    // Build the Docker image using the renamed JAR file
+                    script {
+                            sh 'docker image tag springboot:latest vasanthaadireddy/springboot:latest'
+                            sh 'docker push vasanthaadireddy/springboot:latest'
+                   }
+                }   
+            }
+        }
     }
 }
