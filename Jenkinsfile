@@ -53,5 +53,11 @@ pipeline {
               }
             } 
         }
+        stage('Maven Package') {
+            steps {
+               echo 'Maven package Started'
+               sh 'mvn package'
+          }
+        } 
     }
 }
