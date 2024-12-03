@@ -1,13 +1,8 @@
-def registry = 'https://trialeabhm5.jfrog.io/'
 pipeline {
     agent any
     tools {
         maven 'maven3'
         jdk 'jdk17'
-    }
-    environment {
-        SCANNER_HOME = tool 'sonar-scanner'
-        TRIVY_CACHE_DIR = '/var/tmp/trivy'
     }
     stages {
         stage('Git Checkout') {
@@ -40,83 +35,5 @@ pipeline {
                sh 'trivy fs --format table --output trivy-fs-output.txt .'
             }
         } 
-        stage('Sonar Analysis') {
-            steps {
-               withSonarQubeEnv('sonar') {
-                sh ''' $SCANNER_HOME/bin/sonar-scanner -Dsonar.projectName=SpringBootApp -Dsonar.projectKey=SpringBootApp \
-                                                       -Dsonar.java.binaries=. -Dsonar.exclusions=**/trivy-fs-output.txt '''
-               }
-            }
-        } 
-        stage('Quality Gate') {
-            steps {
-              timeout(time: 1, unit: 'MINUTES') {
-               waitForQualityGate abortPipeline: true, credentialsId: 'sonar'  
-              }
-            } 
-        }
-        stage('Maven Package') {
-            steps {
-               echo 'Maven package Started'
-               sh 'mvn package'
-          }
-        } 
-        stage("Jar Publish") {
-            steps {
-                script {
-                        echo '<--------------- Jar Publish Started --------------->'
-                         def server = Artifactory.newServer url:registry+"/artifactory" ,  credentialsId:"jfrogaccess"
-                         def properties = "buildid=${env.BUILD_ID},commitid=${GIT_COMMIT}";
-                         def uploadSpec = """{
-                              "files": [
-                                {
-                                  "pattern": "target/springbootApp.jar",
-                                  "target": "jenkins-mvn-libs-release",
-                                  "flat": "false",
-                                  "props" : "${properties}",
-                                  "exclusions": [ "*.sha1", "*.md5"]
-                                }
-                             ]
-                         }"""
-                         def buildInfo = server.upload(uploadSpec)
-                         buildInfo.env.collect()
-                         server.publishBuildInfo(buildInfo)
-                         echo '<--------------- Jar Publish Ended --------------->'  
-                
-                }
-            }   
-        } 
-        stage('Build Docker Image and TAG') {
-            steps {
-                script {
-                    // Build the Docker image using the renamed JAR file
-                    script {
-                            sh 'docker build -t springboot:latest .'
-                   }
-                }   
-            }
-        }
-        stage('Docker Image Scan') {
-            steps {
-                sh 'trivy image --format table --scanners vuln -o trivy-image-report.html springboot:latest'
-            }
-        }
-        stage('Archive Report') {
-            steps {
-                // Archive the Trivy report for later reference
-                archiveArtifacts artifacts: 'trivy-image-report.html', fingerprint: true
-            }
-        }
-        stage('Push Docker Image To Docker Hub') {
-            steps {
-                script {
-                    // Build the Docker image using the renamed JAR file
-                    script {
-                            sh 'docker image tag springboot:latest vasanthaadireddy/springboot:latest'
-                            sh 'docker push vasanthaadireddy/springboot:latest'
-                   }
-                }   
-            }
-        }
     }
 }

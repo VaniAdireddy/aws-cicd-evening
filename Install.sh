@@ -72,7 +72,7 @@ mkdir sonar
 sudo chown -R 1000:1000 /home/ubuntu/sonar
 sudo chmod -R 755 /home/ubuntu/sonar
 
- docker run -d \
+docker run -d \
   --name sonar \
   -p 9000:9000 \
   -v /home/ubuntu/sonar:/opt/sonarqube/data \
@@ -97,7 +97,7 @@ sudo chmod -R 755 /home/ubuntu/nexus
 For Jfrog
 --------
 Plugin: Artifactory
-Plugin: Kubernetes
+Plugin: Kubernetes cli
 
 
 # Installing eksctl
