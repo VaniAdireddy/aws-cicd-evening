@@ -10,7 +10,6 @@ pipeline {
                 git branch: 'prod' , url: 'https://github.com/VaniAdireddy/aws-cicd-evening.git'
             }
         }
-    }
         stage('Versioning') {
             steps {
                 script {
@@ -36,4 +35,5 @@ pipeline {
                sh 'trivy fs --format table --output trivy-fs-output.txt .'
             }
         } 
+    }
 }
