@@ -10,3 +10,5 @@ pipeline {
                 git branch: 'prod' , url: 'https://github.com/VaniAdireddy/aws-cicd-evening.git'
             }
         }
+    }
+}
