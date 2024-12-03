@@ -86,5 +86,48 @@ pipeline {
                 }
             }   
         }
+        stage('Build Docker Image and TAG') {
+            steps {
+                script {
+                    // Build the Docker image using the renamed JAR file
+                    script {
+                            sh 'docker build -t springboot:latest .'
+                   }
+                }   
+            }
+        }
+        stage('Docker Image Scan') {
+            steps {
+                sh 'trivy image --format table --scanners vuln -o trivy-image-report.html springboot:latest'
+            }
+        }
+        stage('Archive Report') {
+            steps {
+                // Archive the Trivy report for later reference
+                archiveArtifacts artifacts: 'trivy-image-report.html', fingerprint: true
+            }
+        }
+        stage('Push Docker Image To Docker Hub') {
+            steps {
+                script {
+                    // Build the Docker image using the renamed JAR file
+                    script {
+                            sh 'docker image tag springboot:latest vasanthaadireddy/springboot:latest'
+                            sh 'docker push vasanthaadireddy/springboot:latest'
+                   }
+                }   
+            }
+        }
+        stage('Push Docker Image To AWS ECR') {
+            steps {
+                
+                    // Build the Docker image using the renamed JAR file
+                    script {
+                            sh 'aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 841162703137.dkr.ecr.us-east-1.amazonaws.com'
+                            sh 'docker tag springboot:latest 841162703137.dkr.ecr.us-east-1.amazonaws.com/springboot:latest'
+                            sh 'docker push 841162703137.dkr.ecr.us-east-1.amazonaws.com/springboot:latest'
+                   }  
+            }
+        }
     }
 }
