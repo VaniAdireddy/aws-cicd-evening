@@ -129,5 +129,5 @@ eksctl create cluster \
 --node-type t2.medium \
 --managed --nodes 2 --nodes-min 1 --nodes-max 2 \
 --ssh-access \
---ssh-public-key AWSHYD \
+--ssh-public-key mykeypair \
 --max-pods-per-node 110

@@ -129,5 +129,12 @@ pipeline {
                    }  
             }
         }
+        stage('Deploy To Kubernetes') {
+            steps {
+                withKubeConfig(caCertificate: '', clusterName: 'eks2', contextName: '', credentialsId: 'k8-cred', namespace: 'default', restrictKubeConfigAccess: false, serverUrl: 'https://9E499A1CFC8D7B65DEF7D0D86F3B966B.gr7.us-east-1.eks.amazonaws.com') {
+                sh "kubectl apply -f eks-deploy-k8s.yaml"
+                }
+            }
+        }
     }
 }
